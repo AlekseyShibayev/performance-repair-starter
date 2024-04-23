@@ -4,9 +4,9 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>com.company.app</groupId>
-	<artifactId>performance-log-starter</artifactId>
-	<version>0.0.1</version>
-	<name>performance-log-starter</name>
+	<artifactId>performance-tools-starter</artifactId>
+	<version>0.0.2</version>
+	<name>performance-tools-starter</name>
 	<description>Starter project for Spring Boot</description>
 
 	<properties>
