@@ -37,7 +37,7 @@ import com.company.app.infrastructure.log.performance.interceptor.HibernateQuery
  */
 @Slf4j
 @Configuration
-@EnableAspectJAutoProxy
+//@EnableAspectJAutoProxy
 @ConditionalOnProperty(prefix = "log.performance", name = "enable", havingValue = "true")
 public class PerformanceLogConfiguration {
 

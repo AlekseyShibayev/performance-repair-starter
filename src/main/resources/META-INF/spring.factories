@@ -1,1 +1,1 @@
-org.springframework.boot.autoconfigure.EnableAutoConfiguration=com.company.app.core.StarterConfiguration
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=com.company.app.StarterConfiguration

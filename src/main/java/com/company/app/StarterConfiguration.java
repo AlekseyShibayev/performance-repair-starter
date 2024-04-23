@@ -1,4 +1,4 @@
-package com.company.app.core;
+package com.company.app;
 
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 import org.springframework.context.annotation.ComponentScan;
