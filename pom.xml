@@ -4,14 +4,13 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>com.company.app</groupId>
-	<artifactId>performance-tools-starter</artifactId>
-	<version>0.0.2</version>
-	<name>performance-tools-starter</name>
+	<artifactId>performance-repair-starter</artifactId>
+	<version>0.0.3</version>
+	<name>performance-repair-starter</name>
 	<description>Starter project for Spring Boot</description>
 
 	<properties>
 		<java.version>17</java.version>
-		<jacoco.version>0.8.8</jacoco.version>
 	</properties>
 
 	<parent>
@@ -97,27 +96,7 @@
 
 	<build>
 		<plugins>
-			<plugin>
-				<groupId>org.jacoco</groupId>
-				<artifactId>jacoco-maven-plugin</artifactId>
-				<version>${jacoco.version}</version>
-				<executions>
-					<!--first execution : for preparing JaCoCo runtime agent-->
-					<execution>
-						<goals>
-							<goal>prepare-agent</goal>
-						</goals>
-					</execution>
-					<!--second execution : for creating code coverage reports-->
-					<execution>
-						<id>report</id>
-						<phase>test</phase>
-						<goals>
-							<goal>report</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
+
 		</plugins>
 	</build>
 
