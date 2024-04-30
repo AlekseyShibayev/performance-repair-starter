@@ -103,7 +103,7 @@ public class DynamicEntityGraph {
     private <E> void fillEntityGraph(EntityGraph<E> entityGraph, EntityGraphNode root) {
         List<EntityGraphNode> rootNodeList = root.getNodeList();
         for (EntityGraphNode node : rootNodeList) {
-            if (node.getNodeList().isEmpty()) { // если нет детей
+            if (node.getNodeList().isEmpty()) {
                 entityGraph.addAttributeNodes(node.getName());
             } else {
                 fillSubgraph(entityGraph, node);
@@ -112,12 +112,12 @@ public class DynamicEntityGraph {
     }
 
     private <E> void fillSubgraph(EntityGraph<E> entityGraph, EntityGraphNode node) {
-        Subgraph<E> subgraph = entityGraph.addSubgraph(node.getName()); // создаешь subgraph seconds
-        List<EntityGraphNode> nodeList = node.getNodeList(); // берешь всех детей у seconds
+        Subgraph<E> subgraph = entityGraph.addSubgraph(node.getName());
+        List<EntityGraphNode> nodeList = node.getNodeList();
         for (EntityGraphNode child : nodeList) {
-            if (child.getNodeList().isEmpty()) { // если у seconds ребёнка нет больше детей
+            if (child.getNodeList().isEmpty()) {
                 subgraph.addAttributeNodes(child.getName());
-            } else { // дети есть
+            } else {
                 recursionFill(subgraph, child);
             }
         }
@@ -125,7 +125,7 @@ public class DynamicEntityGraph {
 
     private <E> void recursionFill(Subgraph<E> subgraph, EntityGraphNode node) {
         List<EntityGraphNode> nodeList = node.getNodeList();
-        if (nodeList.isEmpty()) { // выход из рекурсии
+        if (nodeList.isEmpty()) {
             subgraph.addAttributeNodes(node.getName());
         } else {
             for (EntityGraphNode child : nodeList) {
