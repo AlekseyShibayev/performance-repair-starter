@@ -10,9 +10,10 @@ class DynamicEntityGraphTest {
         DynamicEntityGraph dynamicEntityGraph = new DynamicEntityGraph()
                 .with("type")
                 .with("status")
-                .with("child", "child_field");
+                .with("children", "type")
+                .with("children", "status");
 
-        Assertions.assertEquals(3, dynamicEntityGraph.getEntityGraphNodes().size());
+        Assertions.assertEquals(4, dynamicEntityGraph.getEntityGraphNodes().size());
     }
 
     @Test
