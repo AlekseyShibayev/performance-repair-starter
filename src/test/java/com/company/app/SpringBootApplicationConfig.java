@@ -5,10 +5,10 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 
 @SpringBootApplication(exclude = {StarterConfiguration.class})
-public class SpringBootApplicationMock {
+public class SpringBootApplicationConfig {
 
     public static void main(String[] args) {
-        SpringApplication.run(SpringBootApplicationMock.class, args);
+        SpringApplication.run(SpringBootApplicationConfig.class, args);
     }
 
 }
