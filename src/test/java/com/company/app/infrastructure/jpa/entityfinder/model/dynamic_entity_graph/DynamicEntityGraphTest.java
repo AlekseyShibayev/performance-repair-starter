@@ -29,9 +29,10 @@ class DynamicEntityGraphTest extends SpringBootTest {
     void test() {
         First first = prepareTestData();
 
-        List<First> result = entityFinder.findAllAsList(new CommonQuery<>(First.class)
+        CommonQuery<First> query = new CommonQuery<>(First.class)
             .setSpecification(idEq(first.getId()))
-            .with(First_.SECONDS));
+            .with(First_.SECONDS);
+        List<First> result = entityFinder.findAllAsList(query);
 
         Assertions.assertEquals(1, result.size());
         Assertions.assertEquals(1, result.get(0).getSeconds().size());
