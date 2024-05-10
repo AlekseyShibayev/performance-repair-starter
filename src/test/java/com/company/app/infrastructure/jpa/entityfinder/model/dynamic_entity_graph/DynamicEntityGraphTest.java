@@ -8,6 +8,7 @@ import java.util.List;
 import com.company.app.configuration.SpringBootTest;
 import com.company.app.infrastructure.jpa.entityfinder.model.CommonQuery;
 import com.company.app.test_domain.entity.First;
+import com.company.app.test_domain.entity.First_;
 import com.company.app.test_domain.entity.Second;
 import com.company.app.test_domain.repository.FirstRepository;
 import com.company.app.test_domain.repository.SecondRepository;
@@ -30,7 +31,7 @@ class DynamicEntityGraphTest extends SpringBootTest {
 
         List<First> result = entityFinder.findAllAsList(new CommonQuery<>(First.class)
             .setSpecification(idEq(first.getId()))
-            .with("seconds"));
+            .with(First_.SECONDS));
 
         Assertions.assertEquals(1, result.size());
         Assertions.assertEquals(1, result.get(0).getSeconds().size());
@@ -38,7 +39,7 @@ class DynamicEntityGraphTest extends SpringBootTest {
 
     private static Specification<First> idEq(Long id) {
         return (Root<First> root, CriteriaQuery<?> criteriaQuery, CriteriaBuilder criteriaBuilder) ->
-            criteriaBuilder.equal(root.get("id"), id);
+            criteriaBuilder.equal(root.get(First_.ID), id);
     }
 
     private First prepareTestData() {
