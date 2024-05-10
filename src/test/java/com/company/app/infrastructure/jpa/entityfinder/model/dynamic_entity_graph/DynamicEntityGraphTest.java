@@ -9,6 +9,7 @@ import com.company.app.test_domain.entity.SecondInfo;
 import com.company.app.test_domain.entity.Second_;
 import com.company.app.test_domain.entity.Third;
 import com.company.app.test_domain.entity.ThirdInfo;
+import com.company.app.test_domain.entity.Third_;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -20,19 +21,22 @@ class DynamicEntityGraphTest extends SpringBootTest {
         First first = prepareTestData();
 
         DynamicEntityGraph graph = new DynamicEntityGraph()
-            .with(First_.SECONDS)
+            .with(First_.FIRST_INFO)
             .with(First_.SECONDS, Second_.SECOND_INFO)
-            .with(First_.SECONDS, Second_.THIRDS);
+            .with(First_.SECONDS, Second_.THIRDS, Third_.THIRD_INFO);
 
         First result = entityExtractor.load(First.class, first.getId(), graph);
 
         Assertions.assertNotNull(result.getFirstInfo());
+        Assertions.assertEquals("first", result.getFirstInfo().getDescription());
         Assertions.assertEquals(1, result.getSeconds().size());
 
-        Assertions.assertNotNull( result.getSeconds().get(0).getSecondInfo());
+        Assertions.assertNotNull(result.getSeconds().get(0).getSecondInfo());
+        Assertions.assertEquals("second", result.getSeconds().get(0).getSecondInfo().getDescription());
         Assertions.assertEquals(1, result.getSeconds().get(0).getThirds().size());
 
         Assertions.assertNotNull(result.getSeconds().get(0).getThirds().get(0).getThirdInfo());
+        Assertions.assertEquals("third", result.getSeconds().get(0).getThirds().get(0).getThirdInfo().getDescription());
     }
 
     private First prepareTestData() {
@@ -40,19 +44,19 @@ class DynamicEntityGraphTest extends SpringBootTest {
             First first = new First();
             firstRepository.save(first);
 
-            FirstInfo firstInfo = new FirstInfo();
+            FirstInfo firstInfo = new FirstInfo().setDescription("first");
             firstInfoRepository.save(firstInfo);
 
             Second second = new Second();
             secondRepository.save(second);
 
-            SecondInfo secondInfo = new SecondInfo();
+            SecondInfo secondInfo = new SecondInfo().setDescription("second");
             secondInfoRepository.save(secondInfo);
 
             Third third = new Third();
             thirdRepository.save(third);
 
-            ThirdInfo thirdInfo = new ThirdInfo();
+            ThirdInfo thirdInfo = new ThirdInfo().setDescription("third");
             thirdInfoRepository.save(thirdInfo);
 
             thirdInfo.setThird(third);

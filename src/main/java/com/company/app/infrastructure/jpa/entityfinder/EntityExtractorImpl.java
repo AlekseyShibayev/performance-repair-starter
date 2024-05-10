@@ -1,5 +1,15 @@
 package com.company.app.infrastructure.jpa.entityfinder;
 
+import javax.persistence.EntityGraph;
+import javax.persistence.EntityManager;
+import javax.persistence.TypedQuery;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Order;
+import javax.persistence.criteria.Root;
+import java.util.Collections;
+import java.util.List;
+
 import com.company.app.infrastructure.jpa.entityfinder.model.CommonQuery;
 import com.company.app.infrastructure.jpa.entityfinder.model.ReturnType;
 import com.company.app.infrastructure.jpa.entityfinder.model.dynamic_entity_graph.DynamicEntityGraph;
@@ -13,18 +23,9 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.query.QueryUtils;
 import org.springframework.stereotype.Repository;
 
-import javax.persistence.EntityGraph;
-import javax.persistence.EntityManager;
-import javax.persistence.TypedQuery;
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Order;
-import javax.persistence.criteria.Root;
-import java.util.Collections;
-import java.util.List;
-
 import static com.company.app.infrastructure.jpa.entityfinder.model.ReturnType.LIST;
 import static com.company.app.infrastructure.jpa.entityfinder.model.ReturnType.SLICE;
+
 
 @Slf4j
 @Repository
@@ -72,7 +73,7 @@ public class EntityExtractorImpl implements EntityExtractor {
 
         Specification<E> specification = addNullSafePredicate(commonQuery.getSpecification());
         criteriaQuery.select(root)
-                .where(specification.toPredicate(root, criteriaQuery, criteriaBuilder));
+            .where(specification.toPredicate(root, criteriaQuery, criteriaBuilder));
 
         if (pageable != null && pageable.getSort().isSorted()) {
             List<Order> orders = QueryUtils.toOrders(pageable.getSort(), root, criteriaBuilder);

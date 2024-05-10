@@ -1,11 +1,12 @@
 package com.company.app.infrastructure.jpa.entityfinder.model.dynamic_entity_graph;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
-import java.util.ArrayList;
-import java.util.List;
 
 @Getter
 @Setter
