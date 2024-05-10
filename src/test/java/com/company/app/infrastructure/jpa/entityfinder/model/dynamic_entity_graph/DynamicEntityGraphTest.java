@@ -7,10 +7,10 @@ import java.util.List;
 
 import com.company.app.configuration.SpringBootTest;
 import com.company.app.infrastructure.jpa.entityfinder.model.CommonQuery;
-import com.company.app.test_domain.entity.One;
-import com.company.app.test_domain.entity.Two;
-import com.company.app.test_domain.repository.OneRepository;
-import com.company.app.test_domain.repository.TwoRepository;
+import com.company.app.test_domain.entity.First;
+import com.company.app.test_domain.entity.Second;
+import com.company.app.test_domain.repository.FirstRepository;
+import com.company.app.test_domain.repository.SecondRepository;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,42 +20,42 @@ import org.springframework.data.jpa.domain.Specification;
 class DynamicEntityGraphTest extends SpringBootTest {
 
     @Autowired
-    private OneRepository oneRepository;
+    private FirstRepository firstRepository;
     @Autowired
-    private TwoRepository twoRepository;
+    private SecondRepository secondRepository;
 
     @Test
     void test() {
-        One one = prepareTestData();
+        First first = prepareTestData();
 
-        List<One> ones = entityFinder.findAllAsList(new CommonQuery<>(One.class)
-                .setSpecification(idEq(one.getId()) )
-            .with("twos"));
+        List<First> result = entityFinder.findAllAsList(new CommonQuery<>(First.class)
+            .setSpecification(idEq(first.getId()))
+            .with("seconds"));
 
-        Assertions.assertEquals(1, ones.size());
-        Assertions.assertEquals(1, ones.get(0).getTwos().size());
+        Assertions.assertEquals(1, result.size());
+        Assertions.assertEquals(1, result.get(0).getSeconds().size());
     }
 
-    public static Specification<One> idEq(Long id) {
-        return (Root<One> root, CriteriaQuery<?> criteriaQuery, CriteriaBuilder criteriaBuilder) ->
+    private static Specification<First> idEq(Long id) {
+        return (Root<First> root, CriteriaQuery<?> criteriaQuery, CriteriaBuilder criteriaBuilder) ->
             criteriaBuilder.equal(root.get("id"), id);
     }
 
-    private One prepareTestData() {
+    private First prepareTestData() {
         return transactionTemplate.execute(status -> {
-            One one = new One();
-            oneRepository.save(one);
+            First first = new First();
+            firstRepository.save(first);
 
-            Two two = new Two();
-            twoRepository.save(two);
+            Second second = new Second();
+            secondRepository.save(second);
 
-            two.setOne(one);
-            twoRepository.save(two);
+            second.setFirst(first);
+            secondRepository.save(second);
 
-            one.getTwos().add(two);
-            oneRepository.save(one);
+            first.getSeconds().add(second);
+            firstRepository.save(first);
 
-            return one;
+            return first;
         });
     }
 
