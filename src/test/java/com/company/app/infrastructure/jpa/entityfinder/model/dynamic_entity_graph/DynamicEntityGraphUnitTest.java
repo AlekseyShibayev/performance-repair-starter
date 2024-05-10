@@ -3,7 +3,7 @@ package com.company.app.infrastructure.jpa.entityfinder.model.dynamic_entity_gra
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-class DynamicEntityGraphTest {
+class DynamicEntityGraphUnitTest {
 
     @Test
     void test_success_create() {
