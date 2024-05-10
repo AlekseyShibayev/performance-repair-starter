@@ -9,6 +9,7 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import java.io.Serial;
 import java.io.Serializable;
@@ -39,6 +40,10 @@ public class Second implements Serializable {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "first_id")
     private First first;
+
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @JoinColumn(name = "second_info_id")
+    private SecondInfo secondInfo;
 
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "second", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Third> thirds = new ArrayList<>();

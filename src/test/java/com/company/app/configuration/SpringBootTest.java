@@ -3,7 +3,13 @@ package com.company.app.configuration;
 import javax.annotation.PostConstruct;
 import javax.persistence.EntityManager;
 
-import com.company.app.infrastructure.jpa.entityfinder.EntityFinder;
+import com.company.app.infrastructure.jpa.entityfinder.EntityExtractor;
+import com.company.app.test_domain.repository.FirstInfoRepository;
+import com.company.app.test_domain.repository.FirstRepository;
+import com.company.app.test_domain.repository.SecondInfoRepository;
+import com.company.app.test_domain.repository.SecondRepository;
+import com.company.app.test_domain.repository.ThirdInfoRepository;
+import com.company.app.test_domain.repository.ThirdRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -32,7 +38,22 @@ public abstract class SpringBootTest {
     @Autowired
     protected EntityManager entityManager;
     @Autowired
-    protected EntityFinder entityFinder;
+    protected EntityExtractor entityExtractor;
+    /**
+     * Repository
+     */
+    @Autowired
+    protected FirstRepository firstRepository;
+    @Autowired
+    protected FirstInfoRepository firstInfoRepository;
+    @Autowired
+    protected SecondRepository secondRepository;
+    @Autowired
+    protected SecondInfoRepository secondInfoRepository;
+    @Autowired
+    protected ThirdRepository thirdRepository;
+    @Autowired
+    protected ThirdInfoRepository thirdInfoRepository;
 
     @PostConstruct
     void init() {
@@ -45,6 +66,16 @@ public abstract class SpringBootTest {
 
     @AfterEach
     protected void doAfterEach() {
+//        transactionTemplate.executeWithoutResult(transactionStatus -> {
+//            thirdInfoRepository.deleteAllInBatch();
+//            secondInfoRepository.deleteAllInBatch();
+//            firstInfoRepository.deleteAllInBatch();
+//
+//            thirdRepository.deleteAllInBatch();
+//            secondRepository.deleteAllInBatch();
+//            firstRepository.deleteAllInBatch();
+//
+//        });
     }
 
 }

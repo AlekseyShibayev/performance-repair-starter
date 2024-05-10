@@ -1,15 +1,19 @@
 package com.company.app.infrastructure.jpa.entityfinder;
 
+import java.util.List;
+
 import com.company.app.infrastructure.jpa.entityfinder.model.CommonQuery;
+import com.company.app.infrastructure.jpa.entityfinder.model.dynamic_entity_graph.DynamicEntityGraph;
 import org.springframework.data.domain.Slice;
 
-import java.util.List;
 
 /**
  * This class have methods for select any @Entity.
  * Superstructure over Criteria API and Spring Data.
  */
-public interface EntityFinder {
+public interface EntityExtractor {
+
+    <E> E load(Class<E> entityClass, Object primaryKey, DynamicEntityGraph dynamicEntityGraph);
 
     /**
      * Base method, analog of Spring Data findAll(), but expanding it.

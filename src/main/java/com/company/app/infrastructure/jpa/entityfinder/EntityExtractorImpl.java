@@ -20,6 +20,7 @@ import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Order;
 import javax.persistence.criteria.Root;
+import java.util.Collections;
 import java.util.List;
 
 import static com.company.app.infrastructure.jpa.entityfinder.model.ReturnType.LIST;
@@ -28,9 +29,16 @@ import static com.company.app.infrastructure.jpa.entityfinder.model.ReturnType.S
 @Slf4j
 @Repository
 @RequiredArgsConstructor
-public class EntityFinderImpl implements EntityFinder {
+public class EntityExtractorImpl implements EntityExtractor {
 
     private final EntityManager entityManager;
+
+    public <E> E load(Class<E> entityClass, Object primaryKey, DynamicEntityGraph dynamicEntityGraph) {
+        EntityGraph<E> entityGraph = entityManager.createEntityGraph(entityClass);
+        dynamicEntityGraph.prepareGraph(entityGraph);
+        return entityManager.find(entityClass, primaryKey,
+            Collections.singletonMap(QueryHints.HINT_LOADGRAPH, entityGraph));
+    }
 
     public <E> List<E> findAllAsList(CommonQuery<E> commonQuery) {
         return findAllInner(commonQuery, LIST);

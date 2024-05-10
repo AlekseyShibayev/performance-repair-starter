@@ -1,46 +1,38 @@
 package com.company.app.infrastructure.jpa.entityfinder.model.dynamic_entity_graph;
 
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Root;
-import java.util.List;
-
 import com.company.app.configuration.SpringBootTest;
-import com.company.app.infrastructure.jpa.entityfinder.model.CommonQuery;
 import com.company.app.test_domain.entity.First;
+import com.company.app.test_domain.entity.FirstInfo;
 import com.company.app.test_domain.entity.First_;
 import com.company.app.test_domain.entity.Second;
-import com.company.app.test_domain.repository.FirstRepository;
-import com.company.app.test_domain.repository.SecondRepository;
+import com.company.app.test_domain.entity.SecondInfo;
+import com.company.app.test_domain.entity.Second_;
+import com.company.app.test_domain.entity.Third;
+import com.company.app.test_domain.entity.ThirdInfo;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.jpa.domain.Specification;
 
 
 class DynamicEntityGraphTest extends SpringBootTest {
-
-    @Autowired
-    private FirstRepository firstRepository;
-    @Autowired
-    private SecondRepository secondRepository;
 
     @Test
     void test() {
         First first = prepareTestData();
 
-        CommonQuery<First> query = new CommonQuery<>(First.class)
-            .setSpecification(idEq(first.getId()))
-            .with(First_.SECONDS);
-        List<First> result = entityFinder.findAllAsList(query);
+        DynamicEntityGraph graph = new DynamicEntityGraph()
+            .with(First_.SECONDS)
+            .with(First_.SECONDS, Second_.SECOND_INFO)
+            .with(First_.SECONDS, Second_.THIRDS);
 
-        Assertions.assertEquals(1, result.size());
-        Assertions.assertEquals(1, result.get(0).getSeconds().size());
-    }
+        First result = entityExtractor.load(First.class, first.getId(), graph);
 
-    private static Specification<First> idEq(Long id) {
-        return (Root<First> root, CriteriaQuery<?> criteriaQuery, CriteriaBuilder criteriaBuilder) ->
-            criteriaBuilder.equal(root.get(First_.ID), id);
+        Assertions.assertNotNull(result.getFirstInfo());
+        Assertions.assertEquals(1, result.getSeconds().size());
+
+        Assertions.assertNotNull( result.getSeconds().get(0).getSecondInfo());
+        Assertions.assertEquals(1, result.getSeconds().get(0).getThirds().size());
+
+        Assertions.assertNotNull(result.getSeconds().get(0).getThirds().get(0).getThirdInfo());
     }
 
     private First prepareTestData() {
@@ -48,14 +40,36 @@ class DynamicEntityGraphTest extends SpringBootTest {
             First first = new First();
             firstRepository.save(first);
 
+            FirstInfo firstInfo = new FirstInfo();
+            firstInfoRepository.save(firstInfo);
+
             Second second = new Second();
             secondRepository.save(second);
 
-            second.setFirst(first);
-            secondRepository.save(second);
+            SecondInfo secondInfo = new SecondInfo();
+            secondInfoRepository.save(secondInfo);
 
+            Third third = new Third();
+            thirdRepository.save(third);
+
+            ThirdInfo thirdInfo = new ThirdInfo();
+            thirdInfoRepository.save(thirdInfo);
+
+            thirdInfo.setThird(third);
+
+            third.setSecond(second);
+            third.setThirdInfo(thirdInfo);
+
+            secondInfo.setSecond(second);
+
+            second.setFirst(first);
+            second.setSecondInfo(secondInfo);
+            second.getThirds().add(third);
+
+            firstInfo.setFirst(first);
+
+            first.setFirstInfo(firstInfo);
             first.getSeconds().add(second);
-            firstRepository.save(first);
 
             return first;
         });
