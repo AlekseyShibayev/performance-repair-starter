@@ -5,6 +5,7 @@ import javax.persistence.Subgraph;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -72,27 +73,18 @@ public class DynamicEntityGraph {
     }
 
     private void recursionCreate(EntityGraphNode parent, EntityGraphNode child) {
-        List<EntityGraphNode> parentNodeList = parent.getNodeList();
-        if (parentNotContainsChild(parent, child)) {
-            parentNodeList.add(child);
-        } else {
-
-            for (EntityGraphNode node : parentNodeList) {
-                if (node.getName().equals(child.getName())) {
-                    child.setNodeList(node.getNodeList());
-                }
-            }
-
-        }
+        parent.getChildAsOptional(child)
+            .ifPresentOrElse(childFromParent -> tempName(child, childFromParent)
+                , () -> parent.add(child));
 
         if (child.getChild() != null) {
             recursionCreate(child, child.getChild());
         }
     }
 
-    private boolean parentNotContainsChild(EntityGraphNode parent, EntityGraphNode child) {
-        return parent.getNodeList().stream()
-            .noneMatch(node -> node.getName().equals(child.getName()));
+    private void tempName(EntityGraphNode child, EntityGraphNode childFromParent) {
+        child.setNodeList(childFromParent.getNodeList());
+        // now child node and parent children node have equal reference to list with nodes at heap
     }
 
     private <E> void fillEntityGraph(EntityGraph<E> entityGraph, EntityGraphNode root) {

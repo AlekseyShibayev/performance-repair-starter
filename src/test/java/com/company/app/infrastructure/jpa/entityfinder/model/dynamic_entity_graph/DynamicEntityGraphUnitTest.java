@@ -24,6 +24,38 @@ class DynamicEntityGraphUnitTest {
     }
 
     @Test
+    void test_create_root_1() {
+        DynamicEntityGraph dynamicEntityGraph = new DynamicEntityGraph()
+            .with("1", "1.1", "1.1.1", "1.1.1.1")
+            .with("1", "1.1", "1.1.1", "1.1.1.2")
+            .with("1", "1.1", "1.1.2")
+            .with("1", "1.2", "1.2.1")
+            .with("1", "1.2", "1.2.2")
+            .with("2", "2.1", "2.1.1")
+            .with("2", "2.1", "2.1.2")
+            .with("2", "2.1", "2.1.3")
+            .with("2", "2.2", "2.2.1")
+            .with("2", "2.2", "2.2.2");
+
+        EntityGraphNode root = dynamicEntityGraph.createTreeAndGetRoot();
+
+        Assertions.assertEquals("root", root.getName());
+        Assertions.assertEquals(2, root.getNodeList().size());
+
+        EntityGraphNode one = root.getNodeList().get(0);
+        Assertions.assertEquals("1", one.getName());
+        Assertions.assertEquals(2, one.getNodeList().size());
+
+        EntityGraphNode oneOne = one.getNodeList().get(0);
+        Assertions.assertEquals("1.1", oneOne.getName());
+        Assertions.assertEquals(2, oneOne.getNodeList().size());
+
+        EntityGraphNode oneOneOne = oneOne.getNodeList().get(0);
+        Assertions.assertEquals("1.1.1", oneOneOne.getName());
+        Assertions.assertEquals(2, oneOneOne.getNodeList().size());
+    }
+
+    @Test
     void test_create_root() {
         DynamicEntityGraph dynamicEntityGraph = new DynamicEntityGraph()
             .with("1")
@@ -32,16 +64,22 @@ class DynamicEntityGraphUnitTest {
             .with("1", "1.1")
             .with("2", "2.1")
             .with("3", "3.1")
-            .with("1", "1.1", "1.2")
-            .with("1", "1.1", "1.3")
-            .with("2", "2.1", "2.2")
-            .with("2", "2.1", "2.3")
-            .with("2", "2.1", "2.4")
-            .with("3", "3.1", "3.2");
+            .with("1", "1.1", "1.1.1")
+            .with("1", "1.1", "1.1.2")
+            .with("1", "1.2", "1.2.1")
+            .with("1", "1.2", "1.2.2")
+            .with("2", "2.1", "2.1.1")
+            .with("2", "2.1", "2.1.2")
+            .with("2", "2.1", "2.1.3")
+            .with("3", "3.1", "3.1.1");
 
         EntityGraphNode root = dynamicEntityGraph.createTreeAndGetRoot();
         Assertions.assertEquals("root", root.getName());
         Assertions.assertEquals(3, root.getNodeList().size());
+
+        EntityGraphNode one = root.getNodeList().get(0);
+        Assertions.assertEquals("1", one.getName());
+        Assertions.assertEquals(2, one.getNodeList().size());
     }
 
 }
