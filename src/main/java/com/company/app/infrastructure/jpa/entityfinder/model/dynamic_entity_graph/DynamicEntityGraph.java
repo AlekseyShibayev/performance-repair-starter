@@ -6,18 +6,20 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import lombok.AccessLevel;
 import lombok.Getter;
-import lombok.Setter;
-import lombok.experimental.Accessors;
+import lombok.NoArgsConstructor;
 import org.springframework.util.CollectionUtils;
 
 
-@Getter
-@Setter
-@Accessors(chain = true)
+/**
+ * Human-readable api for preparing JPA entity graph.
+ */
+@NoArgsConstructor
 public class DynamicEntityGraph {
 
-    private List<EntityGraphNode> entityGraphNodes = new ArrayList<>();
+    @Getter(value = AccessLevel.PACKAGE)
+    private final List<EntityGraphNode> entityGraphNodes = new ArrayList<>();
 
     public DynamicEntityGraph with(String... path) {
         entityGraphNodes.add(createNode(path));
@@ -38,7 +40,7 @@ public class DynamicEntityGraph {
      */
     private EntityGraphNode createNode(String... path) {
         if (path.length < 1) {
-            throw new IllegalArgumentException("for entity graph need minimum one parameter");
+            throw new IllegalArgumentException("For preparing entity graph need minimum one parameter.");
         }
         List<EntityGraphNode> tempNodeList = mapToTempNodeList(path);
         bindNodes(tempNodeList);
@@ -64,19 +66,14 @@ public class DynamicEntityGraph {
     }
 
     EntityGraphNode createTreeAndGetRoot() {
-        EntityGraphNode root = new EntityGraphNode()
-            .setName("root");
-
-        for (EntityGraphNode node : entityGraphNodes) {
-            recursionCreate(root, node);
-        }
-
+        EntityGraphNode root = new EntityGraphNode().setName("root");
+        entityGraphNodes.forEach(node -> recursionCreate(root, node));
         return root;
     }
 
     private void recursionCreate(EntityGraphNode parent, EntityGraphNode child) {
         List<EntityGraphNode> parentNodeList = parent.getNodeList();
-        if (isNotContains(parentNodeList, child)) {
+        if (parentNotContainsChild(parent, child)) {
             parentNodeList.add(child);
         } else {
 
@@ -87,18 +84,15 @@ public class DynamicEntityGraph {
             }
 
         }
+
         if (child.getChild() != null) {
             recursionCreate(child, child.getChild());
         }
     }
 
-    private boolean isNotContains(List<EntityGraphNode> parentNodeList, EntityGraphNode child) {
-        for (EntityGraphNode node : parentNodeList) {
-            if (node.getName().equals(child.getName())) {
-                return false;
-            }
-        }
-        return true;
+    private boolean parentNotContainsChild(EntityGraphNode parent, EntityGraphNode child) {
+        return parent.getNodeList().stream()
+            .noneMatch(node -> node.getName().equals(child.getName()));
     }
 
     private <E> void fillEntityGraph(EntityGraph<E> entityGraph, EntityGraphNode root) {
