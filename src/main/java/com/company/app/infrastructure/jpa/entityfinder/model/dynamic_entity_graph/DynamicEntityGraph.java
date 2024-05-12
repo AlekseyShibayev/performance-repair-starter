@@ -72,18 +72,13 @@ public class DynamicEntityGraph {
     }
 
     private void recursionCreate(EntityGraphNode parent, EntityGraphNode child) {
-        parent.getChildAsOptional(child)
-            .ifPresentOrElse(childFromParent -> tempName(child, childFromParent)
+        parent.getChildIfExist(child).ifPresentOrElse(childFromParent -> child.setNodeList(childFromParent.getNodeList())
+        // now child node and parent children node have equal reference to list with nodes in heap
                 , () -> parent.add(child));
 
         if (child.getChild() != null) {
             recursionCreate(child, child.getChild());
         }
-    }
-
-    private void tempName(EntityGraphNode child, EntityGraphNode childFromParent) {
-        child.setNodeList(childFromParent.getNodeList());
-        // now child node and parent children node have equal reference to list with nodes at heap
     }
 
     private <E> void fillEntityGraph(EntityGraph<E> entityGraph, EntityGraphNode root) {

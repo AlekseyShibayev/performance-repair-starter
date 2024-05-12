@@ -22,7 +22,7 @@ public class EntityGraphNode {
         nodeList.add(child);
     }
 
-    public Optional<EntityGraphNode> getChildAsOptional(EntityGraphNode child) {
+    public Optional<EntityGraphNode> getChildIfExist(EntityGraphNode child) {
         return nodeList.stream()
             .filter(node -> node.getName().equals(child.getName()))
             .findFirst();
