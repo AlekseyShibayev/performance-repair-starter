@@ -13,6 +13,10 @@ import org.springframework.data.domain.Slice;
  */
 public interface EntityExtractor {
 
+    /**
+     * Load one @Entity by EntityGraph.
+     * If graph branch can be null - do 2 select. First - find by id, second - load by entity graph.
+     */
     <E> E load(Class<E> entityClass, Object primaryKey, DynamicEntityGraph dynamicEntityGraph);
 
     /**

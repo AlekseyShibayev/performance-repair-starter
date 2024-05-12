@@ -5,7 +5,6 @@ import javax.persistence.Subgraph;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -14,7 +13,7 @@ import org.springframework.util.CollectionUtils;
 
 
 /**
- * Human-readable api for preparing JPA entity graph.
+ * Human-readable API for preparing JPA entity graph.
  */
 @NoArgsConstructor
 public class DynamicEntityGraph {
