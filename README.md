@@ -101,7 +101,7 @@ List<A> list = entityFinder.findAsList(query);
 var query = new CommonQuery<>(A.class)
         .setSpecification(specification)
         .setPageable(pageable)
-        .readOnly;
+        .readOnly();
 Slice<A> slice = entityFinder.findAsSlice(query);
 ```
 
@@ -113,7 +113,7 @@ var query = new CommonQuery<>(A.class)
         .setSpecification(specification)
         .setPageable(pageable)
         .with(A_.B)
-        .readOnly;
+        .readOnly();
 Slice<A> list = entityFinder.findAsSlice(query);
 ```
 Передали в маппер list, маппим A и B на POJO view без N+1.
@@ -127,7 +127,7 @@ var query = new CommonQuery<>(A.class)
         .with(A_.С)
         .with(A_.B, B_.D)
         .with(A_.B, B_.E)
-        .readOnly;
+        .readOnly();
 Slice<A> list = entityFinder.findAsSlice(query);
 ``` 
 
@@ -148,7 +148,7 @@ A_2 B_4
 var aQuery = new CommonQuery<>(A.class)
         .setSpecification(specification)
         .setPageable(pageable)
-        .readOnly;
+        .readOnly();
 Slice<A> list = entityFinder.findAsSlice(aQuery);
 
 var aIds = list.stream...;
@@ -157,7 +157,7 @@ var bQuery = new CommonQuery<>(B.class)
         .setSpecification(BSpecification.idsIn(aIds))
         .with(B_.D)
         .with(B_.E)
-        .readOnly;
+        .readOnly();
 List<B> list = entityFinder.findAllAsList(query);
 ``` 
 Далее сложим List B в мапу A.id против List B и работаем с мапой в маппере.
@@ -170,7 +170,7 @@ var query = new CommonQuery<>(A.class)
     .setSpecification(specification)
     .setPageable(pageable)
     .setOrdering((root, cq, cb) -> приджойнить к руту B, сделать cb.order по нужной колонке)
-    .readOnly;
+    .readOnly();
 Slice<A> list = entityFinder.findAsSlice(query);
 ``` 
 
@@ -182,13 +182,13 @@ Native, JPQL, Specification - как удобней.
 ```java
 @Transactional
 public void run(Long id){
-        var query=new CommonQuery<>(A.class)
+        var query = new CommonQuery<>(A.class)
             .setSpecification(ASpecification.idEq(id))
             .with(A_.B)
             .with(A_.С)
             .with(A_.B, B_.D)
             .with(A_.B, B_.E)
-        List<B> list=entityFinder.findAllAsList(query);
+        List<B> list = entityFinder.findAllAsList(query);
         
         ... 
 }
