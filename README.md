@@ -7,12 +7,12 @@
 
 ## У меня есть Spring Data Jpa, зачем мне что-то ещё?
 Spring Data Jpa - хороша, первое знакомство с findByName(name) выглядит как магия.
-Однако, с увеличением сложности приложения можно столкнуться с несколькими проблемами:
+Однако, с увеличением сложности приложения, можно столкнуться с несколькими проблемами:
 
 ### Свалка в @Repository и нет DDD.
 В репозиториях становится слишком много похожих методов. 
 Если необходим новый метод, отличающийся от предыдущих чем-то незначительным - необходимо добавить еще один метод. 
-Под незначительным я имею ввиду: предикат, read-only, limit, join fetch, возвращаемый тип (<E>/Optional/List/Page/Slice), сортировка, блокировка, прочее. 
+Под незначительным я имею ввиду: предикат, read-only, limit, fetch, возвращаемый тип (One/Optional/List/Page/Slice), сортировка, блокировка, прочее. 
 В итоге страдает переиспользование и DDD.
 
 ### Проблемы @Query.
@@ -23,7 +23,7 @@ Spring Data Jpa предлагает использовать Specification дл
 А так же предоставляет JpaSpecificationExecutor который может вернуть Page.
 Бездумное использование Page может привести к проблемам.
 
-### Проблема некомпетентных оптимизаторов.
+### Проблема начинающих оптимизаторов.
 Кто-то на вашем проекте захочет сделать read-only. 
 Отличный способ сэкономить ресурсы, избежав hibernate dirty checking.
 А если @Entity содержит jsonb, то обязательный, иначе получишь update в конце транзакции.
@@ -46,13 +46,14 @@ public User findUser(String login) {
 }
 ```
 И рано или поздно вы найдете вот такой код. 
+Лишняя прокся - мелочь.
 Проблема в том, что выставленного выше try catch не достаточно, ваша оригинальная транзакция уже rollback.
 
 ### @EntityGraph
 Если @Entity не в вашем проекте, это проблема.
 В остальных случаях см. пункт "Свалка в @Repository".
 
-## Хватит это терпеть.
+# Хватит это терпеть.
 Я взял интерфейсы и классы Spring Data Jpa и CriteriaAPI и расширил их написав EntityFinder.
 
 От Spring Data Jpa я взял:
@@ -87,12 +88,13 @@ class CommonQuery<E> {
                 /  \                
                D    E  
 
-1. Аналог findAll
+### 1. Аналог findAll.
 ```java
 var query = new CommonQuery<>(A.class);
 List<A> list = entityFinder.findAsList(query);
 ```
-2. Страничка для фронта с infinite scroll.
+
+### 2. Страничка для фронта с infinite scroll.
 Обычно в этом кейсе приходит Pageable, и предикат в виде POJO или String query.
 Необходимо подготовить Specification самостоятельно.
 ```java
@@ -102,7 +104,9 @@ var query = new CommonQuery<>(A.class)
         .readOnly;
 Slice<A> slice = entityFinder.findAsSlice(query);
 ```
-3. Тоже самое, но для маппинга в view POJO нужны будут ещё и B. Допустим A и B - one-to-one связь. Здесь удобно использовать динамический ентити граф (shortcut метод with) и metamodel.
+
+### 3. Тоже самое, но для маппинга в view POJO нужны будут ещё и B. Допустим A и B - one-to-one связь. 
+Здесь удобно использовать динамический ентити граф (метод with - shortcut к нему) и metamodel.
 ```java
 var query = new CommonQuery<>(A.class)
         .setSpecification(specification)
@@ -111,19 +115,22 @@ var query = new CommonQuery<>(A.class)
         .readOnly;
 Slice<A> list = entityFinder.findAsSlice(query);
 ```
-4. Тоже самое, но для маппинга во view нужны будут B, С, D, E. 
+Передали в маппер list, мапим без N+1.
+
+### 4. Тоже самое, но для маппинга во view нужны будут B, С, D, E. 
 Допустим у них у всех связь - one-to-one. Методом with необходимо рассказать какие ветки тянуть. 
 ```java
 var query = new CommonQuery<>(A.class)
         .setSpecification(specification)
         .setPageable(pageable)
         .with(A_.С)
-        .with(A_.B, B_D)
-        .with(A_.B, B_E)
+        .with(A_.B, B_.D)
+        .with(A_.B, B_.E)
         .readOnly;
 Slice<A> list = entityFinder.findAsSlice(query);
 ``` 
-5. Если есть связь ?-to-many, то ResultSet, будет выглядеть так:
+
+### 5. Если есть связь ?-to-many, то ResultSet, будет выглядеть так:
 ```text
 A_1 B_1
 A_1 B_2
@@ -132,7 +139,7 @@ A_2 B_4
 ```
 А это значит что будут проблемы у кейсов с fetch, sort, limit.
 В таком случае необходимо сделать два запроса.
-Первым выбрать root сущность (A), с учетом fetch, sort, limit.
+Первым выбрать root сущность (A), чтобы ResultSet имел одну строку на одну root сущность.
 Вторым запросом догрузить ветки.
 Например для A-B 1:M, B-D 1:1, B-E 1:1 псевдокод будет выглядеть так: 
 ```java
@@ -151,9 +158,9 @@ var bQuery = new CommonQuery<>(B.class)
         .readOnly;
 List<B> list = entityFinder.findAllAsList(query);
 ``` 
-Далее сложили List<B> в мапу A.id против List<B> и работаем с мапой в маппере.
+Далее сложим List<B> в мапу A.id против List<B> и работаем с мапой в маппере.
 
-6. Нужно учитывать сортировку по колонке не root таблицы.
+### 6. Нужно учитывать сортировку по колонке не root таблицы.
 Тут на помощь придет Ordering. 
 Псевдокод примера A-B 1:1.
 ```java
