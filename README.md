@@ -94,7 +94,7 @@ var query = new CommonQuery<>(A.class);
 List<A> list = entityFinder.findAsList(query);
 ```
 
-### 2. Страничка для фронта с infinite scroll.
+### 2. Страничка для фронта, кейс Slice для infinite scroll.
 Обычно в этом кейсе приходит Pageable, и предикат в виде POJO или String query.
 Необходимо подготовить Specification самостоятельно.
 ```java
@@ -115,7 +115,7 @@ var query = new CommonQuery<>(A.class)
         .readOnly;
 Slice<A> list = entityFinder.findAsSlice(query);
 ```
-Передали в маппер list, мапим без N+1.
+Передали в маппер list, маппим A и B на POJO view без N+1.
 
 ### 4. Тоже самое, но для маппинга во view нужны будут B, С, D, E. 
 Допустим у них у всех связь - one-to-one. Методом with необходимо рассказать какие ветки тянуть. 
@@ -130,7 +130,8 @@ var query = new CommonQuery<>(A.class)
 Slice<A> list = entityFinder.findAsSlice(query);
 ``` 
 
-### 5. Если есть связь ?-to-many, то ResultSet, будет выглядеть так:
+### 5. Кейсы с one-to-many и many-to-many.
+Если есть связь ?-to-many, то ResultSet, будет выглядеть так:
 ```text
 A_1 B_1
 A_1 B_2
