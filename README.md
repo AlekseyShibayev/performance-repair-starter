@@ -161,7 +161,7 @@ List<B> list = entityFinder.findAllAsList(query);
 ``` 
 Далее сложим List B в мапу A.id против List B и работаем с мапой в маппере.
 
-### 6. Нужно учитывать сортировку по колонке не root таблицы.
+### 6. Кейс с сортировкой по колонке не root таблицы.
 Тут на помощь придет Ordering. 
 Псевдокод примера A-B 1:1.
 ```java
@@ -172,6 +172,28 @@ var query = new CommonQuery<>(A.class)
     .readOnly;
 Slice<A> list = entityFinder.findAsSlice(query);
 ``` 
+
+### 7. Кейс с шедулерами.
+Не открываем транзакцию, делаем запрос, который возвращает root id. Native, JPQL, Specification - как удобней.
+Бежим по результату, подгружаем граф, делаем работу.
+
+```java
+@Transactional
+public void run(Long id){
+        var query=new CommonQuery<>(A.class)
+            .setSpecification(ASpecification.idEq(id))
+            .with(A_.B)
+            .with(A_.С)
+            .with(A_.B, B_.D)
+            .with(A_.B, B_.E)
+        List<B> list=entityFinder.findAllAsList(query);
+        
+        ... 
+}
+```
+p.s.
+Я где-то потерял метод для One @Entity, скорее всего он был удален, т.к. не использовался.
+Для одной сущности в некоторых случаях можно делать граф по больше чем 1 коллекции, т.к. тогда декартово произведение строк может быть не критичным. 
 
 ## Мысли в конце.
 EntityFinder расширяет Spring Data Jpa и позволяет строить динамические запросы не только с использованием Specification и Pageable.
