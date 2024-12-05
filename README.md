@@ -1,8 +1,167 @@
-Spring Boot Starter
+## Spring Boot Starter
 
-This starter contains:
-1. EntityExtractor - Superstructure over Criteria API and Spring Data. 
-Expands Spring Data by EntityGraph and Slice.
-2. DynamicEntityGraph - Human-readable API for preparing JPA entity graph.
-3. SliceToPageAdapter - Need for replace Page to Slice in third-party library.
+## Что это и зачем?
+Стартер предоставляет бин EntityFinder, интерфейс фасад,
+который является надстройкой над Criteria API и Spring Data Jpa
+и предназначен для выполнения select запросов.
+
+## У меня есть Spring Data Jpa, зачем мне что-то ещё?
+Spring Data Jpa - хороша, первое знакомство с findByName(name) выглядит как магия.
+Однако, с увеличением сложности приложения можно столкнуться с несколькими проблемами:
+
+### Свалка в @Repository и нет DDD.
+В репозиториях становится слишком много похожих методов. 
+Если необходим новый метод, отличающийся от предыдущих чем-то незначительным - необходимо добавить еще один метод. 
+Под незначительным я имею ввиду: предикат, read-only, limit, join fetch, возвращаемый тип (<E>/Optional/List/Page/Slice), сортировка, блокировка, прочее. 
+В итоге страдает переиспользование и DDD.
+
+### Проблемы @Query.
+Нет limit в не нативной @Query, если ваш hibernate < 6.
+ 
+### Проблемы с пагинацией.
+Spring Data Jpa предлагает использовать Specification для предикатов и Pageable для сортировки и пагинации.
+А так же предоставляет JpaSpecificationExecutor который может вернуть Page.
+Бездумное использование Page может привести к проблемам.
+
+### Проблема некомпетентных оптимизаторов.
+Кто-то на вашем проекте захочет сделать read-only. 
+Отличный способ сэкономить ресурсы, избежав hibernate dirty checking.
+А если @Entity содержит jsonb, то обязательный, иначе получишь update в конце транзакции.
+
+Есть несколько способов это сделать:
+1. Хинтом для методов маркнутых @Query.
+ ```java
+@QueryHints(value = {@QueryHint(name = "org.hibernate.readOnly", value = "true")})
+```
+см. пункт "Свалка в @Repository".
+
+2. @Transaction(read-only)
+
+Псевдокод:
+```java
+@Transaction(read-only)
+public User findUser(String login) {
+    return userRepository.findByLogin()
+        .orElseThrow(() -> new UserNotFoundException())
+}
+```
+И рано или поздно вы найдете вот такой код. 
+Проблема в том, что выставленного выше try catch не достаточно, ваша оригинальная транзакция уже rollback.
+
+### @EntityGraph
+Если @Entity не в вашем проекте, это проблема.
+В остальных случаях см. пункт "Свалка в @Repository".
+
+## Хватит это терпеть.
+Я взял интерфейсы и классы Spring Data Jpa и CriteriaAPI и расширил их написав EntityFinder.
+
+От Spring Data Jpa я взял:
+1. Pageable для пагинации и сортировки.
+2. Specification для предикатов и DDD.
+3. Slice для постраничной выборки.
+
+Так выглядит POJO, который можно дать в EntityFinder, чтобы выполнить select.
+```java
+class CommonQuery<E> {
+    Class<E> classGenericType;
+    Specification<E> specification;
+    Ordering<E> ordering;
+    Pageable pageable;
+    boolean readOnly;
+    Integer maximumExecutionTime;
+    DynamicEntityGraph dynamicEntityGraph;
+```
+
+Дополнительно я сделал поддержку
+1. Read-only.
+2. Ordering, по факту это Specification, но для фазы сортировок, если он есть, то pageable.sort игнорируется. Используется если необходима сортировка по колонке приджойненой таблицы.
+3. Можно задать timeout.
+4. Поддержка entity graph любой глубины с адекватным апи.
+
+# Примеры использования:
+Допустим у вас есть граф сущностей:
+
+                     A
+                   /  \
+                  B    C
+                /  \                
+               D    E  
+
+1. Аналог findAll
+```java
+var query = new CommonQuery<>(A.class);
+List<A> list = entityFinder.findAsList(query);
+```
+2. Страничка для фронта с infinite scroll.
+Обычно в этом кейсе приходит Pageable, и предикат в виде POJO или String query.
+Необходимо подготовить Specification самостоятельно.
+```java
+var query = new CommonQuery<>(A.class)
+        .setSpecification(specification)
+        .setPageable(pageable)
+        .readOnly;
+Slice<A> slice = entityFinder.findAsSlice(query);
+```
+3. Тоже самое, но для маппинга в view POJO нужны будут ещё и B. Допустим A и B - one-to-one связь. Здесь удобно использовать динамический ентити граф (shortcut метод with) и metamodel.
+```java
+var query = new CommonQuery<>(A.class)
+        .setSpecification(specification)
+        .setPageable(pageable)
+        .with(A_.B)
+        .readOnly;
+Slice<A> list = entityFinder.findAsSlice(query);
+```
+4. Тоже самое, но для маппинга во view нужны будут B, С, D, E. 
+Допустим у них у всех связь - one-to-one. Методом with необходимо рассказать какие ветки тянуть. 
+```java
+var query = new CommonQuery<>(A.class)
+        .setSpecification(specification)
+        .setPageable(pageable)
+        .with(A_.С)
+        .with(A_.B, B_D)
+        .with(A_.B, B_E)
+        .readOnly;
+Slice<A> list = entityFinder.findAsSlice(query);
+``` 
+5. Если есть связь ?-to-many, то ResultSet, будет выглядеть так:
+```text
+A_1 B_1
+A_1 B_2
+A_2 B_3
+A_2 B_4
+```
+А это значит что будут проблемы у кейсов с fetch, sort, limit.
+В таком случае необходимо сделать два запроса.
+Первым выбрать root сущность (A), с учетом fetch, sort, limit.
+Вторым запросом догрузить ветки.
+Например для A-B 1:M, B-D 1:1, B-E 1:1 псевдокод будет выглядеть так: 
+```java
+var aQuery = new CommonQuery<>(A.class)
+        .setSpecification(specification)
+        .setPageable(pageable)
+        .readOnly;
+Slice<A> list = entityFinder.findAsSlice(aQuery);
+
+var aIds = list.stream...;
+
+var bQuery = new CommonQuery<>(B.class)
+        .setSpecification(BSpecification.idsIn(aIds))
+        .with(B_.D)
+        .with(B_.E)
+        .readOnly;
+List<B> list = entityFinder.findAllAsList(query);
+``` 
+Далее сложили List<B> в мапу A.id против List<B> и работаем с мапой в маппере.
+
+6. Нужно учитывать сортировку по колонке не root таблицы.
+Тут на помощь придет Ordering. 
+Псевдокод примера A-B 1:1.
+```java
+var query = new CommonQuery<>(A.class)
+    .setSpecification(specification)
+    .setPageable(pageable)
+    .setOrdering((root, cq, cb) -> приджойнить к руту B, сделать cb.order по нужной колонке)
+    .readOnly;
+Slice<A> list = entityFinder.findAsSlice(query);
+``` 
 
