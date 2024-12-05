@@ -159,7 +159,7 @@ var bQuery = new CommonQuery<>(B.class)
         .readOnly;
 List<B> list = entityFinder.findAllAsList(query);
 ``` 
-Далее сложим List<B> в мапу A.id против List<B> и работаем с мапой в маппере.
+Далее сложим List B в мапу A.id против List B и работаем с мапой в маппере.
 
 ### 6. Нужно учитывать сортировку по колонке не root таблицы.
 Тут на помощь придет Ordering. 
@@ -172,4 +172,9 @@ var query = new CommonQuery<>(A.class)
     .readOnly;
 Slice<A> list = entityFinder.findAsSlice(query);
 ``` 
+
+## Мысли в конце.
+EntityFinder расширяет Spring Data Jpa и позволяет строить динамические запросы не только с использованием Specification и Pageable.
+В вашем распоряжении fetch, limit, read-only, timeout, list/slice.
+EntityFinder пропагандирует чаще использовать спецификации, больше спецификаций - больше переиспользования, быстрее разработка.
 
