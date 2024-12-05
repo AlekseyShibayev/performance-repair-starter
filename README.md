@@ -119,7 +119,7 @@ Slice<A> list = entityFinder.findAsSlice(query);
 Передали в маппер list, маппим A и B на POJO view без N+1.
 
 ### 4. Страничка для фронта, кейс Slice для infinite scroll, но для маппинга во view нужны будут A, B, С, D, E. 
-Допустим у них у всех связь one-to-one. Методом with необходимо рассказать какие ветки тянуть. 
+Допустим у них у всех связь one-to-one. Методом with необходимо рассказать, какие ветки тянуть. 
 ```java
 var query = new CommonQuery<>(A.class)
         .setSpecification(specification)
@@ -132,18 +132,18 @@ Slice<A> list = entityFinder.findAsSlice(query);
 ``` 
 
 ### 5. Кейсы с one-to-many и many-to-many.
-Если есть связь ?-to-many, то ResultSet, будет выглядеть так:
+Если есть связь ?-to-many, то ResultSet будет выглядеть так:
 ```text
 A_1 B_1
 A_1 B_2
 A_2 B_3
 A_2 B_4
 ```
-А это значит что будут проблемы у кейсов с fetch, sort, limit.
+А это значит, что будут проблемы у кейсов с fetch, sort, limit.
 В таком случае необходимо сделать два запроса.
 Первым выбрать root сущность (A), чтобы ResultSet имел одну строку на одну root сущность.
 Вторым запросом догрузить ветки.
-Например для A-B 1:M, B-D 1:1, B-E 1:1 псевдокод будет выглядеть так: 
+Например, для A-B 1:M, B-D 1:1, B-E 1:1 псевдокод будет выглядеть так: 
 ```java
 var aQuery = new CommonQuery<>(A.class)
         .setSpecification(specification)
@@ -175,7 +175,8 @@ Slice<A> list = entityFinder.findAsSlice(query);
 ``` 
 
 ### 7. Кейс с шедулерами.
-Не открываем транзакцию, делаем запрос, который возвращает root id. Native, JPQL, Specification - как удобней.
+Не открываем транзакцию, делаем запрос, который возвращает root list id. 
+Native, JPQL, Specification - как удобней.
 Бежим по результату, подгружаем граф, делаем работу.
 
 ```java
@@ -192,7 +193,7 @@ public void run(Long id){
         ... 
 }
 ```
-p.s.
+P.S.
 Я где-то потерял метод для One @Entity, скорее всего он был удален, т.к. не использовался.
 Для одной сущности в некоторых случаях можно делать граф по больше чем 1 коллекции, т.к. тогда декартово произведение строк может быть не критичным. 
 
