@@ -1,20 +1,12 @@
-package com.company.app.infrastructure.jpa.entityfinder;
+package com.company.app.infrastructure.entityfinder;
 
-import javax.persistence.EntityGraph;
-import javax.persistence.EntityManager;
-import javax.persistence.TypedQuery;
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Order;
-import javax.persistence.criteria.Root;
-import java.util.Collections;
-import java.util.List;
-
-import com.company.app.infrastructure.jpa.entityfinder.model.CommonQuery;
-import com.company.app.infrastructure.jpa.entityfinder.model.ReturnType;
-import com.company.app.infrastructure.jpa.entityfinder.model.dynamic_entity_graph.DynamicEntityGraph;
+import com.company.app.infrastructure.entityfinder.model.CommonQuery;
+import com.company.app.infrastructure.entityfinder.model.DynamicEntityGraph;
+import com.company.app.infrastructure.entityfinder.model.Ordering;
+import com.company.app.infrastructure.entityfinder.model.ReturnType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.Session;
 import org.hibernate.jpa.QueryHints;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -23,23 +15,25 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.query.QueryUtils;
 import org.springframework.stereotype.Repository;
 
-import static com.company.app.infrastructure.jpa.entityfinder.model.ReturnType.LIST;
-import static com.company.app.infrastructure.jpa.entityfinder.model.ReturnType.SLICE;
+import javax.persistence.EntityGraph;
+import javax.persistence.EntityManager;
+import javax.persistence.TypedQuery;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Order;
+import javax.persistence.criteria.Root;
+import java.util.List;
+
+import static com.company.app.infrastructure.entityfinder.model.ReturnType.LIST;
+import static com.company.app.infrastructure.entityfinder.model.ReturnType.SLICE;
 
 
 @Slf4j
 @Repository
 @RequiredArgsConstructor
-public class EntityExtractorImpl implements EntityExtractor {
+public class EntityFinderImpl implements EntityFinder {
 
     private final EntityManager entityManager;
-
-    public <E> E load(Class<E> entityClass, Object primaryKey, DynamicEntityGraph dynamicEntityGraph) {
-        EntityGraph<E> entityGraph = entityManager.createEntityGraph(entityClass);
-        dynamicEntityGraph.prepareGraph(entityGraph);
-        return entityManager.find(entityClass, primaryKey,
-            Collections.singletonMap(QueryHints.HINT_LOADGRAPH, entityGraph));
-    }
 
     public <E> List<E> findAllAsList(CommonQuery<E> commonQuery) {
         return findAllInner(commonQuery, LIST);
@@ -63,6 +57,8 @@ public class EntityExtractorImpl implements EntityExtractor {
     }
 
     private <E> List<E> findAllInner(CommonQuery<E> commonQuery, ReturnType returnType) {
+        log.debug("try to prepare query from: [{}]", commonQuery);
+
         Class<E> entityClass = commonQuery.getClassGenericType();
         Pageable pageable = commonQuery.getPageable();
         DynamicEntityGraph dynamicEntityGraph = commonQuery.getDynamicEntityGraph();
@@ -72,13 +68,17 @@ public class EntityExtractorImpl implements EntityExtractor {
         Root<E> root = criteriaQuery.from(entityClass);
 
         Specification<E> specification = addNullSafePredicate(commonQuery.getSpecification());
-        criteriaQuery.select(root)
-            .where(specification.toPredicate(root, criteriaQuery, criteriaBuilder));
 
-        if (pageable != null && pageable.getSort().isSorted()) {
+        Ordering<E> ordering = commonQuery.getOrdering();
+        if (ordering != null) {
+            specification = specification.and(ordering);
+        } else if (pageable != null && pageable.getSort().isSorted()) {
             List<Order> orders = QueryUtils.toOrders(pageable.getSort(), root, criteriaBuilder);
             criteriaQuery.orderBy(orders);
         }
+
+        criteriaQuery.select(root)
+                .where(specification.toPredicate(root, criteriaQuery, criteriaBuilder));
 
         TypedQuery<E> typedQuery = entityManager.createQuery(criteriaQuery);
 
@@ -100,6 +100,11 @@ public class EntityExtractorImpl implements EntityExtractor {
             typedQuery.setHint(QueryHints.HINT_READONLY, true);
         }
 
+        Integer maximumExecutionTime = commonQuery.getMaximumExecutionTime();
+        if (maximumExecutionTime != null && maximumExecutionTime > 0) {
+            typedQuery.setHint(QueryHints.SPEC_HINT_TIMEOUT, maximumExecutionTime);
+        }
+
         return typedQuery.getResultList();
     }
 
@@ -118,6 +123,16 @@ public class EntityExtractorImpl implements EntityExtractor {
     private <E> Specification<E> addNullSafePredicate(Specification<E> specification) {
         Specification<E> nullSafePredicate = (root, query, criteriaBuilder) -> criteriaBuilder.equal(criteriaBuilder.literal(2), 2);
         return nullSafePredicate.and(specification);
+    }
+
+    @Override
+    public <E> List<E> findByIds(List<Long> ids, Class<E> entityClass) {
+        try (var session = entityManager.unwrap(Session.class)) {
+            return session.byMultipleIds(entityClass)
+                    .enableSessionCheck(true)
+                    .withBatchSize(1024) // because hibernate.query.in_clause_parameter_padding=true
+                    .multiLoad(ids);
+        }
     }
 
 }

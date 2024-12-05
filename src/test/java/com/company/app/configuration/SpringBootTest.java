@@ -3,7 +3,7 @@ package com.company.app.configuration;
 import javax.annotation.PostConstruct;
 import javax.persistence.EntityManager;
 
-import com.company.app.infrastructure.jpa.entityfinder.EntityExtractor;
+import com.company.app.infrastructure.entityfinder.EntityFinder;
 import com.company.app.test_domain.repository.FirstInfoRepository;
 import com.company.app.test_domain.repository.FirstRepository;
 import com.company.app.test_domain.repository.SecondInfoRepository;
@@ -38,7 +38,7 @@ public abstract class SpringBootTest {
     @Autowired
     protected EntityManager entityManager;
     @Autowired
-    protected EntityExtractor entityExtractor;
+    protected EntityFinder entityFinder;
     /**
      * Repository
      */

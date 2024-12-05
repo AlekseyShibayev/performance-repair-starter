@@ -1,4 +1,4 @@
-package com.company.app.infrastructure.jpa.entityfinder.model;
+package com.company.app.infrastructure.entityfinder.model;
 
 public enum ReturnType {
 

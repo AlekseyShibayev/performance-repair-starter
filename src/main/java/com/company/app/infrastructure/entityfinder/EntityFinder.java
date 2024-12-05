@@ -1,23 +1,15 @@
-package com.company.app.infrastructure.jpa.entityfinder;
+package com.company.app.infrastructure.entityfinder;
 
-import java.util.List;
-
-import com.company.app.infrastructure.jpa.entityfinder.model.CommonQuery;
-import com.company.app.infrastructure.jpa.entityfinder.model.dynamic_entity_graph.DynamicEntityGraph;
+import com.company.app.infrastructure.entityfinder.model.CommonQuery;
 import org.springframework.data.domain.Slice;
 
+import java.util.List;
 
 /**
  * This class have methods for select any @Entity.
  * Superstructure over Criteria API and Spring Data.
  */
-public interface EntityExtractor {
-
-    /**
-     * Load one @Entity by EntityGraph.
-     * If graph branch can be null - do 2 select. First - find by id, second - load by entity graph.
-     */
-    <E> E load(Class<E> entityClass, Object primaryKey, DynamicEntityGraph dynamicEntityGraph);
+public interface EntityFinder {
 
     /**
      * Base method, analog of Spring Data findAll(), but expanding it.
@@ -26,6 +18,7 @@ public interface EntityExtractor {
      * 2. specification: if specification exist - then add null safe predicate 2=2
      * 3. pageable: if pageable exist - then add sorting and pagination logic, pagination as limit only
      * 4. readOnly: if readOnly true - add readOnly as hint
+     * 5. timeout: if maximumExecutionTime > 0 - add timeout hint. Time in ms and must be 500 ms or more
      */
     <E> List<E> findAllAsList(CommonQuery<E> commonQuery);
 
@@ -36,7 +29,15 @@ public interface EntityExtractor {
      * 2. specification: if specification exist - then add null safe predicate 2=2
      * 3. pageable: if pageable exist - then add sorting and pagination logic
      * 4. readOnly: if readOnly true - add readOnly as hint
+     * 5. timeout: if maximumExecutionTime > 0 - add timeout hint. Time in ms and must be 500 ms or more
      */
     <E> Slice<E> findAllAsSlice(CommonQuery<E> commonQuery);
+
+    /**
+     * Use this method if part of entities loaded before and contains in first level cache.
+     * Hibernate execute IN query only with absent entities.
+     * Return naked Entity, need load LAZY fields additionally.
+     */
+    <E> List<E> findByIds(List<Long> ids, Class<E> entityClass);
 
 }

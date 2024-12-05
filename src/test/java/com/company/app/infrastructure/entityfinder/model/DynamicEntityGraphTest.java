@@ -1,18 +1,17 @@
-package com.company.app.infrastructure.jpa.entityfinder.model.dynamic_entity_graph;
+package com.company.app.infrastructure.entityfinder.model;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-
-class DynamicEntityGraphUnitTest {
+class DynamicEntityGraphTest {
 
     @Test
     void test_success_create() {
         DynamicEntityGraph dynamicEntityGraph = new DynamicEntityGraph()
-            .with("type")
-            .with("status")
-            .with("children", "type")
-            .with("children", "status");
+                .with("type")
+                .with("status")
+                .with("children", "type")
+                .with("children", "status");
 
         Assertions.assertEquals(4, dynamicEntityGraph.getEntityGraphNodes().size());
     }
@@ -20,22 +19,22 @@ class DynamicEntityGraphUnitTest {
     @Test
     void test_negative_create() {
         Assertions.assertThrows(IllegalArgumentException.class,
-            () -> new DynamicEntityGraph().with());
+                () -> new DynamicEntityGraph().with());
     }
 
     @Test
     void test_create_root_1() {
         DynamicEntityGraph dynamicEntityGraph = new DynamicEntityGraph()
-            .with("1", "1.1", "1.1.1", "1.1.1.1")
-            .with("1", "1.1", "1.1.1", "1.1.1.2")
-            .with("1", "1.1", "1.1.2")
-            .with("1", "1.2", "1.2.1")
-            .with("1", "1.2", "1.2.2")
-            .with("2", "2.1", "2.1.1")
-            .with("2", "2.1", "2.1.2")
-            .with("2", "2.1", "2.1.3")
-            .with("2", "2.2", "2.2.1")
-            .with("2", "2.2", "2.2.2");
+                .with("1", "1.1", "1.1.1", "1.1.1.1")
+                .with("1", "1.1", "1.1.1", "1.1.1.2")
+                .with("1", "1.1", "1.1.2")
+                .with("1", "1.2", "1.2.1")
+                .with("1", "1.2", "1.2.2")
+                .with("2", "2.1", "2.1.1")
+                .with("2", "2.1", "2.1.2")
+                .with("2", "2.1", "2.1.3")
+                .with("2", "2.2", "2.2.1")
+                .with("2", "2.2", "2.2.2");
 
         EntityGraphNode root = dynamicEntityGraph.createTreeAndGetRoot();
 
@@ -58,20 +57,20 @@ class DynamicEntityGraphUnitTest {
     @Test
     void test_create_root() {
         DynamicEntityGraph dynamicEntityGraph = new DynamicEntityGraph()
-            .with("1")
-            .with("2")
-            .with("3")
-            .with("1", "1.1")
-            .with("2", "2.1")
-            .with("3", "3.1")
-            .with("1", "1.1", "1.1.1")
-            .with("1", "1.1", "1.1.2")
-            .with("1", "1.2", "1.2.1")
-            .with("1", "1.2", "1.2.2")
-            .with("2", "2.1", "2.1.1")
-            .with("2", "2.1", "2.1.2")
-            .with("2", "2.1", "2.1.3")
-            .with("3", "3.1", "3.1.1");
+                .with("1")
+                .with("2")
+                .with("3")
+                .with("1", "1.1")
+                .with("2", "2.1")
+                .with("3", "3.1")
+                .with("1", "1.1", "1.1.1")
+                .with("1", "1.1", "1.1.2")
+                .with("1", "1.2", "1.2.1")
+                .with("1", "1.2", "1.2.2")
+                .with("2", "2.1", "2.1.1")
+                .with("2", "2.1", "2.1.2")
+                .with("2", "2.1", "2.1.3")
+                .with("3", "3.1", "3.1.1");
 
         EntityGraphNode root = dynamicEntityGraph.createTreeAndGetRoot();
         Assertions.assertEquals("root", root.getName());

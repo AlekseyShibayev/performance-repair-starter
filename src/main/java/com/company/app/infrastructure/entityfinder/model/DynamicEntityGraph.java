@@ -1,4 +1,9 @@
-package com.company.app.infrastructure.jpa.entityfinder.model.dynamic_entity_graph;
+package com.company.app.infrastructure.entityfinder.model;
+
+import lombok.Getter;
+import lombok.Setter;
+import lombok.experimental.Accessors;
+import org.springframework.util.CollectionUtils;
 
 import javax.persistence.EntityGraph;
 import javax.persistence.Subgraph;
@@ -6,20 +11,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import org.springframework.util.CollectionUtils;
-
-
-/**
- * Human-readable API for preparing JPA entity graph.
- */
-@NoArgsConstructor
+@Getter
+@Setter
+@Accessors(chain = true)
 public class DynamicEntityGraph {
 
-    @Getter(value = AccessLevel.PACKAGE)
-    private final List<EntityGraphNode> entityGraphNodes = new ArrayList<>();
+    private List<EntityGraphNode> entityGraphNodes = new ArrayList<>();
 
     public DynamicEntityGraph with(String... path) {
         entityGraphNodes.add(createNode(path));
@@ -40,7 +37,7 @@ public class DynamicEntityGraph {
      */
     private EntityGraphNode createNode(String... path) {
         if (path.length < 1) {
-            throw new IllegalArgumentException("For preparing entity graph need minimum one parameter.");
+            throw new IllegalArgumentException("for entity graph need minimum one parameter");
         }
         List<EntityGraphNode> tempNodeList = mapToTempNodeList(path);
         bindNodes(tempNodeList);
@@ -49,8 +46,8 @@ public class DynamicEntityGraph {
 
     private List<EntityGraphNode> mapToTempNodeList(String[] path) {
         return Arrays.stream(path)
-            .map(name -> new EntityGraphNode().setName(name))
-            .toList();
+                .map(name -> new EntityGraphNode().setName(name))
+                .toList();
     }
 
     private void bindNodes(List<EntityGraphNode> tempNodeList) {
@@ -66,25 +63,47 @@ public class DynamicEntityGraph {
     }
 
     EntityGraphNode createTreeAndGetRoot() {
-        EntityGraphNode root = new EntityGraphNode().setName("root");
-        entityGraphNodes.forEach(node -> recursionCreate(root, node));
+        EntityGraphNode root = new EntityGraphNode()
+                .setName("root");
+
+        for (EntityGraphNode node : entityGraphNodes) {
+            recursionCreate(root, node);
+        }
+
         return root;
     }
 
     private void recursionCreate(EntityGraphNode parent, EntityGraphNode child) {
-        parent.getChildIfExist(child).ifPresentOrElse(childFromParent -> child.setNodeList(childFromParent.getNodeList())
-        // now child node and parent children node have equal reference to list with nodes in heap
-                , () -> parent.add(child));
+        List<EntityGraphNode> parentNodeList = parent.getNodeList();
+        if (isNotContains(parentNodeList, child)) {
+            parentNodeList.add(child);
+        } else {
 
+            for (EntityGraphNode node : parentNodeList) {
+                if (node.getName().equals(child.getName())) {
+                    child.setNodeList(node.getNodeList());
+                }
+            }
+
+        }
         if (child.getChild() != null) {
             recursionCreate(child, child.getChild());
         }
     }
 
+    private boolean isNotContains(List<EntityGraphNode> parentNodeList, EntityGraphNode child) {
+        for (EntityGraphNode node : parentNodeList) {
+            if (node.getName().equals(child.getName())) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     private <E> void fillEntityGraph(EntityGraph<E> entityGraph, EntityGraphNode root) {
         List<EntityGraphNode> rootNodeList = root.getNodeList();
         for (EntityGraphNode node : rootNodeList) {
-            if (node.getNodeList().isEmpty()) {
+            if (node.getNodeList().isEmpty()) { // если нет детей
                 entityGraph.addAttributeNodes(node.getName());
             } else {
                 fillSubgraph(entityGraph, node);
@@ -93,12 +112,12 @@ public class DynamicEntityGraph {
     }
 
     private <E> void fillSubgraph(EntityGraph<E> entityGraph, EntityGraphNode node) {
-        Subgraph<E> subgraph = entityGraph.addSubgraph(node.getName());
-        List<EntityGraphNode> nodeList = node.getNodeList();
+        Subgraph<E> subgraph = entityGraph.addSubgraph(node.getName()); // создаешь subgraph seconds
+        List<EntityGraphNode> nodeList = node.getNodeList(); // берешь всех детей у seconds
         for (EntityGraphNode child : nodeList) {
-            if (child.getNodeList().isEmpty()) {
+            if (child.getNodeList().isEmpty()) { // если у seconds ребёнка нет больше детей
                 subgraph.addAttributeNodes(child.getName());
-            } else {
+            } else { // дети есть
                 recursionFill(subgraph, child);
             }
         }
@@ -106,7 +125,7 @@ public class DynamicEntityGraph {
 
     private <E> void recursionFill(Subgraph<E> subgraph, EntityGraphNode node) {
         List<EntityGraphNode> nodeList = node.getNodeList();
-        if (nodeList.isEmpty()) {
+        if (nodeList.isEmpty()) { // выход из рекурсии
             subgraph.addAttributeNodes(node.getName());
         } else {
             for (EntityGraphNode child : nodeList) {

@@ -1,4 +1,4 @@
-package com.company.app.infrastructure.jpa.entityfinder.model;
+package com.company.app.infrastructure.entityfinder.additional;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
 import org.springframework.data.domain.Page;
@@ -15,7 +15,9 @@ import java.util.function.Function;
  */
 public class SliceToPageAdapter<E> extends SliceImpl<E> implements Page<E> {
 
-    private static final String EXCEPTION_MESSAGE = "All work do Slice. Page methods with total amount not supported. If you need 'total' - use original PageImpl.";
+    private static final String EXCEPTION_MESSAGE = """
+                    All work do Slice. Page methods with total amount not supported. If you need 'total' - use original PageImpl.
+                    """;
 
     /**
      * Constructors
@@ -24,8 +26,14 @@ public class SliceToPageAdapter<E> extends SliceImpl<E> implements Page<E> {
         super(content, pageable, hasNext);
     }
 
-    public static <E> Page<E> of (Slice<E> slice) {
+    @SuppressWarnings("checkstyle:MissingJavadocMethod")
+    public static <E> Page<E> of(Slice<E> slice) {
         return new SliceToPageAdapter<>(slice.getContent(), slice.getPageable(), slice.hasNext());
+    }
+
+    @SuppressWarnings("checkstyle:MissingJavadocMethod")
+    public static <E> Page<E> of(Slice<E> slice, Pageable pageable) {
+        return new SliceToPageAdapter<>(slice.getContent(), pageable, slice.hasNext());
     }
 
     /**
